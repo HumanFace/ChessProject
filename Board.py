@@ -38,10 +38,13 @@ class Board:
         ["rook", True, (1, "h")],
         ]
 
-
         self.__whiteIsCurrent = True
+        self.__winner = None
     
     def getCoords(self):
+        """
+        Returns all the figures on the chessboard and their locations in '('pW', (0, 0))' notation
+        """
         returnList = []
         for i in self.__coords:
             if i[1]:
@@ -54,41 +57,73 @@ class Board:
             else:
                 firstLetter = i[0][0]
             
-            returnList.append((firstLetter + color, (i[2][0] - 1, ord(i[2][1]) - 97)))
+            returnList.append((firstLetter + color, (ord(i[2][1]) - 97, i[2][0] - 1)))
+        return returnList
+    
+    def getPossibleMoves(self, sourceCoords):
+        """
+        Returns a list of all possible moves in [(x, y)] notation, given source coords in (x, y) notation
+        """
+        newCoords = (sourceCoords[1] + 1, chr(sourceCoords[0] + 97))
+        figure = self.__getFigureByCoords(newCoords)
+
+        if figure[1] != self.__whiteIsCurrent:
+            return []
+        
+        possibleMoves = self.__getValidMoves(*figure)
+        returnList = []
+        for moves in possibleMoves:
+            for move in moves:
+                returnList.append((ord(move[1]) - 97, move[0] - 1))
         return returnList
     
     def getCurrentPlayer(self):
+        """
+        Returns color of the current player
+        """
         return self.__boolToColor(self.__whiteIsCurrent)
     
     def move(self, fromCoords, toCoords):
-        movingFigure = self.getFigureByCoords(fromCoords)
+        """
+        Handles movement and capturing of the pieces given source and target coords in (x, y) notation
+        """
 
-        targetFigure = self.getFigureByCoords(toCoords)
+        # convert to (1, 'a') notation
+        fromCoords = (fromCoords[1] + 1, chr(fromCoords[0] + 97))
+        toCoords = (toCoords[1] + 1, chr(toCoords[0] + 97))
+
+        # get info about the pieces
+        movingFigure = self.__getFigureByCoords(fromCoords)
+
+        targetFigure = self.__getFigureByCoords(toCoords)
         targetFigureColor = targetFigure[1]
-
-        #TODO: finish this bolck
-        toCoordValid = False
-        validMoves = __getValidMoves(*movingFigure)
-
 
         if not movingFigure[0]:
             print("This source coord is empty!")
             return
         
-        elif toCoords not in __getValidMoves(*movingFigure):
-            print("This does not seem to be a valid move")
+        elif movingFigure[1] != self.__whiteIsCurrent:
+            print("This doesn't seem to be your piece!")
+            return
+        
+        elif not self.__validateMove(toCoords, self.__getValidMoves(*movingFigure)):
+            print("This does not seem to be a valid move!")
             return
         
         elif targetFigureColor != None:
             if targetFigureColor == self.__whiteIsCurrent:
-                print("The target position seems to be taken by a figure of the same color")
+                print("The target position seems to be taken by a piece of the same color!")
                 return
             
             else:
                 self.__coords.remove(targetFigure)
                 self.__coords.remove(movingFigure)
                 self.__coords.append([movingFigure[0], movingFigure[1], toCoords])
-                print(f"There was one removed figure: {targetFigure[0]} of {self.__boolToColor(targetFigureColor)}")
+                print(f"There was one captured figure: {targetFigure[0]} of {self.__boolToColor(targetFigureColor)} color")
+
+                # handle the capture of a king
+                if targetFigure[0] == "king":
+                    self.__winner = self.__whiteIsCurrent
         else:
             self.__coords.remove(movingFigure)
             self.__coords.append([movingFigure[0], movingFigure[1], toCoords])
@@ -96,13 +131,29 @@ class Board:
         print("The figure was moved")
         self.__whiteIsCurrent = not self.__whiteIsCurrent
     
-    def getFigureByCoords(self, coords):
+    def __getFigureByCoords(self, coords):
+        """
+        Returns piece info in ('pawn', True, (1, 'a')) notation by coords in (1, 'a') notation
+        """
         for i in self.__coords:
             if i[2] == coords:
                 return i
         return (None, None, None)
+    
+    def getWinner(self):
+        """
+        Returns the color of the winner if exists, else returns None
+        """
+        if self.__winner == None:
+            return self.__winner
+
+        else:
+            return self.__boolToColor(self.__winner)
 
     def __getValidMoves(self, figureType, isWhite, position):
+        """
+        Returns a list of directions of moves given the parameters,
+        """
         moves = []
         if figureType == "pawn":
             if isWhite:
@@ -111,16 +162,17 @@ class Board:
             else:
                 moves = [[(position[0] - 1, position[1]), (position[0] - 2, position[1])]]
 
-        # TODO: fix rook and queen
-        elif figureType == "rook":
-            for i in ((0,1),(1,0),(1,1)):
+        elif figureType == "rook" or figureType == "queen":
+            for i in ((0,1,0),(0,1,1),(1,0,0),(1,0,1)):
                 directionList = []
                 for j in range(7):
-                    x = position[0] + i[0]*(j + 1)*(-1)**i[1]
-                    y = chr(ord(position[1]) + i[1]*(j + 1)*(-1)**i[0])
-                    if not (0 < x < 9) or not (96 < ord(y) < 105):
+                    x = position[0] + i[0]*(j + 1)*(-1)**i[2]
+                    y = chr(ord(position[1]) + i[1]*(j + 1)*(-1)**i[2])
+                    if not (0 < x < 9) or not (96 < ord(y) < 105) or (self.__getFigureByCoords((x,y))[1] == self.__whiteIsCurrent):
                         break  
                     directionList.append((x, y))
+                    if self.__getFigureByCoords((x,y))[0]:
+                        break
                 moves.append(directionList)
         
         elif figureType == "knight":
@@ -134,27 +186,12 @@ class Board:
                 for j in range(7):
                     x = position[0] + (-1)**i[0]*(j + 1)
                     y = chr(ord(position[1]) + (-1)**i[1]*(j + 1))
-                    if not (0 < x < 9) or not (96 < ord(y) < 105):
+                    if not (0 < x < 9) or not (96 < ord(y) < 105) or (self.__getFigureByCoords((x,y))[1] == self.__whiteIsCurrent):
                         break  
                     directionList.append((x, y))
+                    if self.__getFigureByCoords((x,y))[0]:
+                        break
                 moves.append(directionList)
-
-        elif figureType == "queen":
-            for i in ((0,0),(0,1),(1,0),(1,1)):
-                directionList = []
-                directionList2 = []
-                for j in range(7):
-                    x = position[0] + (-1)**i[0]*(j + 1)
-                    y = chr(ord(position[1]) + (-1)**i[1]*(j + 1))
-                    x2 = position[0] + i[0]*(j + 1)*(-1)**i[1]
-                    y2 = chr(ord(position[1]) + i[1]*(j + 1)*(-1)**i[0])
-                    if (not (0 < x < 9) or not (96 < ord(y) < 105)) or (not (0 < x2 < 9) or not (96 < ord(y2) < 105)):
-                        break  
-                    directionList.append((x, y))
-                    if i != (0,0): 
-                        directionList2.append((x2, y2))
-                moves.append(directionList)
-                moves.append(directionList2)
         
         elif figureType == "king":
             for i in (-1, 0, 1):
@@ -162,92 +199,53 @@ class Board:
                     if i != 0 or j != 0:
                         moves.append([(position[0] + i, chr(ord(position[1]) + j))])
 
+        if figureType == "queen":
+            for i in ((0,0),(0,1),(1,0),(1,1)):
+                directionList = []
+                for j in range(7):
+                    x = position[0] + (-1)**i[0]*(j + 1)
+                    y = chr(ord(position[1]) + (-1)**i[1]*(j + 1))
+                    if (not (0 < x < 9) or not (96 < ord(y) < 105)) or (self.__getFigureByCoords((x,y))[1] == self.__whiteIsCurrent):
+                        break  
+                    directionList.append((x, y))
+                    if self.__getFigureByCoords((x,y))[0]:
+                        break
+                moves.append(directionList)
 
 
-        __cutInvalidIndexes(moves)
+        self.__cutInvalidIndexes(moves)
         return moves
-    
+
     def __cutInvalidIndexes(self, moves):
+        """
+        Cuts indexes that are outside the chessboard or target a piece of the same color from a list of directions of moves.
+        """
         for direction in moves:
             toRemove = []
             for move in direction:
-                if not (0 < move[0] < 9) or not (96 < ord(move[1]) < 105):
+                if not (0 < move[0] < 9) or not (96 < ord(move[1]) < 105) or (self.__getFigureByCoords((move[0], move[1]))[1] == self.__whiteIsCurrent):
                     toRemove.append(move)
             for removal in toRemove:
                 direction.remove(removal)
-
+    
+    def __validateMove(self, move, validMoves):
+        """
+        Returns True if a move is in a given list of direcions of moves, else returns False
+        """
+        for moves in validMoves:
+            if move in moves:
+                return True
+        
+        return False
 
 
     def __boolToColor(self, boolValue):
+        """
+        Converts booleans to string by the rules:
+        True -> 'white'
+        False -> 'black'
+        """
         if boolValue:
             return "white"
         else:
             return "black"
-
-class Figure:
-   def __init__(self, figure):
-       self.x = None
-       self.y = None
-       self.figure = figure
-       self.count_of_moves = 0
-
-   def possible_moves(self, x, y):
-       move = ThisBoard.position(x, y)
-       move = [1, 2, 3, 4, 5, 6, 7, 8]
-       if self.figure == 'rook':
-           move = [(x+move, y), (x, y+move)]
-       if self.figure == 'pawn':
-           first_move = (x+2, y)
-           forward = (x+1, y)
-           throw_away = (x+1, y+1)
-           move = [first_move, forward, throw_away]
-       if self.figure == 'bishop':
-           forward = (x+move, y+move)
-           move = [forward]
-       if self.figure == 'knight':
-           right_forward = (x+1, y+3)
-           left_forward = (x-1, y+3)
-           right_backward = (x+1, y-3)
-           left_backward = (x-1, y-3)
-           right_up = (x+3, y+1)
-           left_up = (x-3, y+1)
-           right_down = (x+3, y-1)
-           left_down = (x-3, y-1)
-           forward = [(right_forward, left_forward, right_backward, left_backward, right_up, right_down, left_up, left_down)]
-       if self.figure == 'bishop':
-           left_forward = (x-move, y+move)
-           right_forward = (x+move, y+move)
-           left_backward = (x-move, y-move)
-           right_backward = (x+move, y-move)
-           forward = [(left_backward, left_forward, right_backward, right_forward)]
-
-class UI:
- 
-   def display(self, get_figs=''):
-       board = [['.']*8]*8
- 
-       print([' ', '1', '2', '3', '4', '5', '6', '7', '8'])
-       for row in board:
-           print("    ", row)
- 
-   def message(self, message_content):
-       print(message_content)
- 
-   def play(self, get_valid_moves, move_figure=""):
- 
-       figurehead = (input("Select column (D): "),
-                     input("Select row (5): "))
- 
-       valid_moves = get_valid_moves(figurehead)
- 
-       for i, move in enumerate(valid_moves):
-           self.message(f'{i + 1}. Column: {move[0]} Row: {move[1]}')
- 
-       move = valid_moves[int(input("Select move (number): ")) - 1]
- 
-       # move_figure(move)
- 
-       self.message(move)
-
-ThisBoard = Board()
-print(ThisBoard.getCoords())

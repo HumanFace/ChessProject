@@ -136,14 +136,11 @@ class UI():
         Returns list of two tuples. First are coords of selected piece. Second are coords to move to.
         """
         selected, to = self.__selected_piece, self.__move_to
-        self.clear_selection()
         return [selected, to]
     
     def get_ready_state(self):
-        if self.__from_coords_ready and self.__to_coords_ready:
-            return True
-        else:
-            return False
+        return (self.__from_coords_ready, self.__to_coords_ready)
+        
 
     def set_possible_moves(self, moves):
         """

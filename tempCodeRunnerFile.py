@@ -1,1 +1,1 @@
-('rB', (0, 0))
+UI.set_possible_moves((1,1))

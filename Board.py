@@ -157,10 +157,16 @@ class Board:
         moves = []
         if figureType == "pawn":
             if isWhite:
-                moves = [[(position[0] + 1, position[1]), (position[0] + 2, position[1])]]
+                if position[0] == 2 and self.__getFigureByCoords((position[0] + 1, position[1]))[0] == None:
+                    moves = [[(position[0] + 1, position[1]), (position[0] + 2, position[1])]]
+                else:
+                    moves = [[(position[0] + 1, position[1])]]
 
             else:
-                moves = [[(position[0] - 1, position[1]), (position[0] - 2, position[1])]]
+                if position[0] == 7 and self.__getFigureByCoords((position[0] - 1, position[1]))[0] == None:
+                    moves = [[(position[0] - 1, position[1]), (position[0] - 2, position[1])]]
+                else:
+                    moves = [[(position[0] - 1, position[1])]]
 
         elif figureType == "rook" or figureType == "queen":
             for i in ((0,1,0),(0,1,1),(1,0,0),(1,0,1)):

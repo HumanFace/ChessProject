@@ -92,6 +92,14 @@ class UI():
         p.display.set_caption('CHESS')
         self.render(board_state)
 
+    def message(self, message):
+        font = p.font.Font('freesansbold.ttf', 32)
+        text = font.render(message, True, p.Color(
+            255, 255, 255), p.Color(0, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (self.__WIDTH // 2, self.__HEIGHT // 2)
+        self.__screen.blit(text, textRect)
+        p.display.flip()
     ####################
     ### HANDLE INPUT ###
     ####################
@@ -111,6 +119,7 @@ class UI():
         else:
             self.__move_to = calc_sq_coords
             self.__to_coords_ready = True
+
     def __quit(self):
         """
         Sets running to off state.
@@ -137,10 +146,9 @@ class UI():
         """
         selected, to = self.__selected_piece, self.__move_to
         return [selected, to]
-    
+
     def get_ready_state(self):
         return (self.__from_coords_ready, self.__to_coords_ready)
-        
 
     def set_possible_moves(self, moves):
         """
@@ -167,3 +175,9 @@ class UI():
         Returns running state.
         """
         return self.__running
+
+    def change_state(self):
+        """
+        Changes the running state.
+        """
+        self.__running = not self.__running

@@ -5,10 +5,9 @@ import time
 # initiate variables
 UI = UI()
 PlayingBoard = Board()
-inGame = True
 
 UI.init_board(PlayingBoard.getCoords())
-while UI.get_state() and inGame:
+while UI.get_state():
     UI.user_input()
 
     # await selected source coord
@@ -24,9 +23,10 @@ while UI.get_state() and inGame:
 
     # check if a winner exists
     if PlayingBoard.getWinner():
-        print(f"{PlayingBoard.getWinner().upper()} WON THE GAME")
-        inGame = False
-    
+        UI.message(f"{PlayingBoard.getWinner().upper()} WON THE GAME")
+        time.sleep(4)
+        UI.change_state()
+
     UI.render(PlayingBoard.getCoords())
     # sleep for 1/60 of a second to prevent unnecesary CPU overload
     time.sleep(1/60)

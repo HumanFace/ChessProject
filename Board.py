@@ -131,15 +131,6 @@ class Board:
         print("The figure was moved")
         self.__whiteIsCurrent = not self.__whiteIsCurrent
     
-    def __getFigureByCoords(self, coords):
-        """
-        Returns piece info in ('pawn', True, (1, 'a')) notation by coords in (1, 'a') notation
-        """
-        for i in self.__coords:
-            if i[2] == coords:
-                return i
-        return (None, None, None)
-    
     def getWinner(self):
         """
         Returns the color of the winner if exists, else returns None
@@ -150,6 +141,15 @@ class Board:
         else:
             return self.__boolToColor(self.__winner)
 
+    def __getFigureByCoords(self, coords):
+        """
+        Returns piece info in ('pawn', True, (1, 'a')) notation by coords in (1, 'a') notation
+        """
+        for i in self.__coords:
+            if i[2] == coords:
+                return i
+        return (None, None, None)
+
     def __getValidMoves(self, figureType, isWhite, position):
         """
         Returns a list of directions of moves given the parameters,
@@ -157,16 +157,28 @@ class Board:
         moves = []
         if figureType == "pawn":
             if isWhite:
-                if position[0] == 2 and self.__getFigureByCoords((position[0] + 1, position[1]))[0] == None:
+                if position[0] == 2 and self.__getFigureByCoords((position[0] + 2, position[1]))[0] == None:
                     moves = [[(position[0] + 1, position[1]), (position[0] + 2, position[1])]]
-                else:
+                elif self.__getFigureByCoords((position[0] + 1, position[1]))[0] == None:
                     moves = [[(position[0] + 1, position[1])]]
+                
+                # capturing a piece diagonally
+                if self.__getFigureByCoords((position[0] + 1, chr(ord(position[1]) + 1)))[1] == False:
+                    moves.append([(position[0] + 1, chr(ord(position[1]) + 1))])
+                if self.__getFigureByCoords((position[0] + 1, chr(ord(position[1]) - 1)))[1] == False:
+                    moves.append([(position[0] + 1, chr(ord(position[1]) - 1))])
 
             else:
-                if position[0] == 7 and self.__getFigureByCoords((position[0] - 1, position[1]))[0] == None:
+                if position[0] == 7 and self.__getFigureByCoords((position[0] - 2, position[1]))[0] == None:
                     moves = [[(position[0] - 1, position[1]), (position[0] - 2, position[1])]]
-                else:
+                elif self.__getFigureByCoords((position[0] - 1, position[1]))[0] == None:
                     moves = [[(position[0] - 1, position[1])]]
+                
+                # capturing a piece diagonally
+                if self.__getFigureByCoords((position[0] - 1, chr(ord(position[1]) + 1)))[1]:
+                    moves.append([(position[0] - 1, chr(ord(position[1]) + 1))])
+                if self.__getFigureByCoords((position[0] - 1, chr(ord(position[1]) - 1)))[1]:
+                    moves.append([(position[0] - 1, chr(ord(position[1]) - 1))])
 
         elif figureType == "rook" or figureType == "queen":
             for i in ((0,1,0),(0,1,1),(1,0,0),(1,0,1)):

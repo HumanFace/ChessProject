@@ -2,12 +2,19 @@
 
 ChessProject is a simple python implementation of chess.
 
-## Installation
+## Requirements
+
+- [Python 3](https://www.python.org/downloads/)
+- [pip](https://pypi.org/project/pip/)
+- [git](https://git-scm.com/downloads)
+
+## Installation and running
 
 ```bash
 git clone git@github.com:HumanFace/ChessProject.git
 cd ChessProject
-pip install pygame
+::skip the next line if you already have pygame installed
+pip install pygame --user
 python main.py
 ```
 

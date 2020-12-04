@@ -21,6 +21,6 @@ Somewhat simplified [traditional chess rules](https://en.wikipedia.org/wiki/Rule
 
 ## Credit
 
-Design: Ad Furdova
-Front-end: Daniel Josef
-Back-end: Adnan Al Ali
+- __Design:__ Ad Furdova
+- __Front-end:__ Daniel Josef
+- __Back-end:__ Adnan Al Ali
